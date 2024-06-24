@@ -1,58 +1,67 @@
+import numpy as np
 import pandas as pd
-import matplotlib
+data_df = pd.read_csv('auto-mpg.csv', header = 0, engine = 'python')
+
+print('데이터셋 크기: ', data_df.shape)
+data_df.head()
+data_df = data_df.drop(['car_name', 'origin', 'horsepower'], axis = 1, inplace = False)
+data_df.head()
+print('데이터셋 크기: ', data_df.shape)
+데이터셋 크기:  (398, 6)
+
+data_df.info()
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, r2_score
+
+#X, Y 분할하기
+Y = data_df['mpg']
+X = data_df.drop(['mpg'], axis = 1, inplace = False)
+
+#훈련용 데이터와 평가용 데이터 분할하기
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size = 0.3, random_state = 0)
+
+#선형 회귀 분석: 모델 생성
+lr = LinearRegression()
+
+#선형 회귀 분석: 모델 훈련
+lr.fit(X_train, Y_train)
+LinearRegression()
+
+#선형 회귀 분석: 평가 데이터에 대한 예측 수행 -> 예측 결과 Y_predict 구하기
+Y_predict = lr.predict(X_test)
+
+mse = mean_squared_error(Y_test, Y_predict)
+rmse = np.sqrt(mse)
+print('MSE : {0:.3f}, RMSE : {1:.3f}'.format(mse, rmse))
+print('R^2(Variance score) : {0:.3f}'.format(r2_score(Y_test, Y_predict)))
+MSE : 12.278, RMSE : 3.504
+R^2(Variance score) : 0.808
+
+print('Y 절편 값:', np.round(lr.intercept_, 2))
+print('회귀 계수 값:', np.round(lr.coef_, 2))
+
+coef = pd.Series(data = np.round(lr.coef_, 2), index = X.columns)
+coef.sort_values(ascending = False)
+model_year      0.76
+acceleration    0.20
+displacement    0.01
+weight         -0.01
+cylinders      -0.14
+dtype: float64
 import matplotlib.pyplot as plt
+import seaborn as sn
 
-column_headers = ['x1','y1']
+fig, axs = plt.subplots(figsize = (16, 16), ncols = 3, nrows = 2)
+x_features = ['model_year', 'acceleration', 'displacement', 'weight', 'cylinders']
+plot_color = ['r', 'b', 'y', 'g', 'r']
+for i, feature in enumerate(x_features):
+    row = int(i/3)
+    col = i%3
+    sns.regplot(x = feature, y = 'mpg', data = data_df, ax = axs[row][col], color = plot_color[i])print("연비를 예측하고 싶은 차의 정보를 입력해주세요.")
 
-column_headers5482 = ['x5482','y5482']
-
-column_headers1 = ['x2','y2']
-column_headers2 = ['x3','y3']
-column_headers3 = ['x4','y4']
-column_headers4 = ['x5','y5']
-
-
-csv = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/lastdepo.csv', names = column_headers)
-
-csv5482 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/new1.csv', names = column_headers5482)
-
-csv1 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/dat.csv', names = column_headers1)
-csv2 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/dat2.csv', names = column_headers2)
-csv3 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/dat3.csv', names = column_headers3)
-csv4 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/dat4.csv', names = column_headers4)
-
-
-
-
-
-
-x = csv.loc[:,'x1']
-y = csv.loc[:,'y1']
-
-x5482 = csv5482.loc[:,'x5482']
-y5482 = csv5482.loc[:,'y5482']
-
-
-
-xa = csv1.loc[:,'x2']  #작년 결과
-ya = csv1.loc[:,'y2']
-xb = csv2.loc[:,'x3']
-yb = csv2.loc[:,'y3']
-xc = csv3.loc[:,'x4']
-yc = csv3.loc[:,'y4']
-xd = csv4.loc[:,'x5']
-yd = csv4.loc[:,'y5']
-
-
-plt.plot(x,y)
-
-plt.plot(x5482,y5482)
-
-plt.legend(('ver.2024','1.5482'))
-plt.title('energy,depth graph') 
-plt.xlabel('depth(um))')
-plt.ylabel('deposited Energy(eV/Angs./electron)')
-plt.xlim(0,1.2)
-plt.ylim(0,3.2)
-plt.grid(axis = 'y')
-plt.show()
+cylinders_1 = int(input("cylinders : "))
+displacement_1 = int(input("displacement : "))
+weight_1 = int(input("weight : "))
+acceleration_1 = int(input("accleration : "))
+model_year_1 = int(input("model_year : "))
