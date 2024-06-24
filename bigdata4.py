@@ -1,58 +1,81 @@
-import pandas as pd
-import matplotlib
+from sklearn.tree import DecisionTreeClassifier
+
+#결정 트리 분류 분석: 모델 생성
+dt_HAR = DecisionTreeClassifier(random_state=156)
+
+#결정 트리 분류 분석: 모델 훈련
+dt_HAR.fit(X_train, Y_train)
+DecisionTreeClassifier(random_state=156)
+
+#결정 트리 분류 분석: 평가 데이터에 예측 수행 -> 예측 결과로 Y_predict 구하기
+Y_predict = dt_HAR.predict(X_test)
+
+from sklearn.metrics import accuracy_score
+
+accuracy = accuracy_score(Y_test, Y_predict)
+print('결정 트리 예측 정확도: {0:.4f}'.format(accuracy))
+
+print('결정 트리의 현재 하이퍼 매개변수: \n', dt_HAR.get_params())
+from sklearn.model_selection import GridSearchCV
+
+params = {
+    'max_depth' : [6, 8, 10, 12, 16, 20, 24]
+}
+
+grid_cv = GridSearchCV(dt_HAR, param_grid = params, scoring = 'accuracy', cv = 5, return_train_score = True)
+
+grid_cv.fit(X_train, Y_train)
+GridSearchCV(cv=5, estimator=DecisionTreeClassifier(random_state=156),
+             param_grid={'max_depth': [6, 8, 10, 12, 16, 20, 24]},
+             return_train_score=True, scoring='accuracy')
+             
+cv_results_df = pd.DataFrame(grid_cv.cv_results_)
+
+cv_results_df[['param_max_depth', 'mean_test_score', 'mean_train_score']]
+print('최고 평균 정확도: {0:.4f}, 최적 하이퍼 매개변수: {1}'.format(grid_cv.best_score_, grid_cv.best_params_))
+params = {
+    'max_depth' : [8, 16, 20],
+    'min_samples_split' : [8, 16, 24]
+}
+
+grid_cv = GridSearchCV(dt_HAR, param_grid = params, scoring = 'accuracy', cv = 5, return_train_score = True)
+grid_cv.fit(X_train, Y_train)
+GridSearchCV(cv=5, estimator=DecisionTreeClassifier(random_state=156),
+             param_grid={'max_depth': [8, 16, 20],
+                         'min_samples_split': [8, 16, 24]},
+             return_train_score=True, scoring='accuracy')
+             
+cv_results_df = pd.DataFrame(grid_cv.cv_results_)
+
+cv_results_df[['param_max_depth', 'param_min_samples_split', 'mean_test_score', 'mean_train_score']]
+print('최고 평균 정확도: {0:.4f}, 최적 하이퍼 매개변수: {1}'.format(grid_cv.best_score_, grid_cv.best_params_))
+best_dt_HAR = grid_cv.best_estimator_
+best_Y_predict = best_dt_HAR.predict(X_test)
+best_accuracy = accuracy_score(Y_test, best_Y_predict)
+
+print('best 결정 트리 예측 정확도: {0:.4f}'.format(best_accuracy))
+import seaborn as sns
 import matplotlib.pyplot as plt
 
-column_headers = ['x1','y1']
+feature_importance_values = best_dt_HAR.feature_importances_
+feature_importance_values_s = pd.Series(feature_importance_values, index = X_train.columns)
+feature_top10 = feature_importance_values_s.sort_values(ascending = False)[:10]
 
-column_headers5482 = ['x5482','y5482']
-
-column_headers1 = ['x2','y2']
-column_headers2 = ['x3','y3']
-column_headers3 = ['x4','y4']
-column_headers4 = ['x5','y5']
-
-
-csv = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/lastdepo.csv', names = column_headers)
-
-csv5482 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/new1.csv', names = column_headers5482)
-
-csv1 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/dat.csv', names = column_headers1)
-csv2 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/dat2.csv', names = column_headers2)
-csv3 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/dat3.csv', names = column_headers3)
-csv4 = pd.read_csv('C:/Users/INJE/OneDrive - 순천대학교/바탕 화면/ebeam/dat4.csv', names = column_headers4)
-
-
-
-
-
-
-x = csv.loc[:,'x1']
-y = csv.loc[:,'y1']
-
-x5482 = csv5482.loc[:,'x5482']
-y5482 = csv5482.loc[:,'y5482']
-
-
-
-xa = csv1.loc[:,'x2']  #작년 결과
-ya = csv1.loc[:,'y2']
-xb = csv2.loc[:,'x3']
-yb = csv2.loc[:,'y3']
-xc = csv3.loc[:,'x4']
-yc = csv3.loc[:,'y4']
-xd = csv4.loc[:,'x5']
-yd = csv4.loc[:,'y5']
-
-
-plt.plot(x,y)
-
-plt.plot(x5482,y5482)
-
-plt.legend(('ver.2024','1.5482'))
-plt.title('energy,depth graph') 
-plt.xlabel('depth(um))')
-plt.ylabel('deposited Energy(eV/Angs./electron)')
-plt.xlim(0,1.2)
-plt.ylim(0,3.2)
-plt.grid(axis = 'y')
+plt.figure(figsize = (10, 5))
+plt.title('Feature Top 10')
+sns.barplot(x = feature_top10, y = feature_top10.index)
 plt.show()
+
+!pip install graphviz
+Looking in indexes: https://pypi.org/simple, https://us-python.pkg.dev/colab-wheels/public/simple/
+Requirement already satisfied: graphviz in /usr/local/lib/python3.8/dist-packages (0.10.1)
+
+from sklearn.tree import export_graphviz
+
+import graphviz
+
+
+with open("/tree.dot") as f:
+    dot_graph = f.read()
+
+graphviz.Source(dot_graph)
